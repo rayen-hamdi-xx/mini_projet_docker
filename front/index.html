@@ -3,16 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurants Data</title>
+    <title>Restaurant Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .data-list {
+            margin-top: 20px;
+        }
+        .data-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-item:last-child {
+            border-bottom: none;
+        }
+        .accordion {
+            background-color: #f1f1f1;
+            color: #444;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+        }
+        .accordion.active, .accordion:hover {
+            background-color: #ccc;
+        }
+        .accordion-content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+        }
+        .grades {
+            margin-top: 10px;
+        }
+    </style>
 </head>
-<body onload="fetchRestaurants()">
-    <header>
-        <h1>Welcome to the Restaurant Dashboard</h1>
-    </header>
-    <section id="restaurants">
-        <h2>List of Restaurants</h2>
-        <ul id="restaurant-list"></ul>
-    </section>
-    <script src="server.js"></script>
+<body>
+    <div class="container">
+        <h1>Restaurant Data</h1>
+        <div class="data-list" id="dataList">
+            <!-- Data will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch data from the Nginx server
+        fetch('https://localhost:8082/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Debug: Log the data to inspect the structure
+    
+                // Populate the data on the page
+                const dataList = document.getElementById('dataList');
+                if (Array.isArray(data)) {
+                    data.forEach(item => {
+                         // Debugging the current item
+    
+                        const div = document.createElement('div');
+                        div.classList.add('data-item');
+                        div.innerHTML = `
+                            <h3>${item.name}</h3>
+                            <p><strong>Address:</strong> ${item.address.building} ${item.address.street}, ${item.address.borough} ${item.address.zipcode}</p>
+                            <p><strong>Cuisine:</strong> ${item.cuisine}</p>
+                            <p><strong>Coordinates:</strong> ${item.coord && Array.isArray(item.coord) && item.coord.length === 2 ? `Latitude: ${item.coord[1]}, Longitude: ${item.coord[0]}` : 'N/A'}</p>
+                            <button class="accordion">Grades</button>
+                            <div class="accordion-content">
+                                ${item.grades && Array.isArray(item.grades) && item.grades.length > 0 ? 
+                                    item.grades.map(grade => `
+                                        <div>
+                                            <p><strong>Date:</strong> ${new Date(grade.date).toLocaleDateString()}</p>
+                                            <p><strong>Grade:</strong> ${grade.grade}</p>
+                                            <p><strong>Score:</strong> ${grade.score}</p>
+                                        </div>
+                                    `).join('') 
+                                    : '<p>No grades available.</p>'}
+                            </div>
+                        `;
+                        dataList.appendChild(div);
+                    });
+    
+                    // Add event listeners for accordion toggle
+                    const accordions = document.querySelectorAll('.accordion');
+                    accordions.forEach(accordion => {
+                        accordion.addEventListener('click', function() {
+                            this.classList.toggle('active');
+                            const content = this.nextElementSibling;
+                            if (content.style.display === "block") {
+                                content.style.display = "none";
+                            } else {
+                                content.style.display = "block";
+                            }
+                        });
+                    });
+                } else {
+                    dataList.innerHTML = '<p>No data available.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                document.getElementById('dataList').innerHTML = '<p>Error loading data. Please try again later.</p>';
+            });
+    </script>
+    
+    
 </body>
 </html>
