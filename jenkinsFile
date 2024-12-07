@@ -13,8 +13,12 @@ pipeline {
     stages {
         stage('Clone Repo') {
             steps {
-                // Clone the GitHub repository (automatically done by SCM polling)
-                git 'https://github.com/rayen-hamdi-xx/mini_projet_docker'
+                checkout scm
+            }
+        }
+        stage('Build Frontend Docker Image') {
+            steps {
+                echo 'Building Frontend Docker Image...'
             }
         }
 
