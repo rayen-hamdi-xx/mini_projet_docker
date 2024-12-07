@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        FRONTEND_DIR = 'front'
+        BACKEND_DIR = 'back'
+        FRONTEND_IMAGE = 'frontend-image'
+        BACKEND_IMAGE = 'backend-image'
+        FRONTEND_PORT = '8083'
+        BACKEND_PORT = '8082'
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                // Clone the GitHub repository (automatically done by SCM polling)
+                git 'https://github.com/rayen-hamdi-xx/mini_projet_docker'
+            }
+        }
+
+        stage('Build Frontend Docker Image') {
+            steps {
+                dir("${FRONTEND_DIR}") {
+                    script {
+                        docker.build("${FRONTEND_IMAGE}")
+                    }
+                }
+            }
+        }
+
+        stage('Build Backend Docker Image') {
+            steps {
+                dir("${BACKEND_DIR}") {
+                    script {
+                        docker.build("${BACKEND_IMAGE}")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Frontend') {
+            steps {
+                script {
+                    // Stop and remove existing frontend container if exists
+                    sh "docker stop nginx2 || true"
+                    sh "docker rm nginx2 || true"
+                    
+                    // Run the frontend container
+                    sh "docker run -d  --network bis_network --name nginx2 -p ${FRONTEND_PORT}:80 ${FRONTEND_IMAGE}"
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
+            steps {
+                script {
+                    // Stop and remove existing backend container if exists
+                    sh "docker stop nginx1 || true"
+                    sh "docker rm nginx1 || true"
+                    
+                    // Run the backend container
+                    sh "docker run -d  --network bis_network --name nginx1 -p ${BACKEND_PORT}:443 ${BACKEND_IMAGE}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up or notify (e.g., send an email or Slack message)
+            echo 'Deployment finished.'
+        }
+    }
+}
