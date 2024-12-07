@@ -14,7 +14,7 @@ pipeline {
         stage('Clone Repo') {
             steps {
                 // Clone the GitHub repository (automatically done by SCM polling)
-                git 'https://github.com/rayen-hamdi-xx/mini_projet_docker'
+                git url: 'https://github.com/rayen-hamdi-xx/mini_projet_docker', branch: 'main'
             }
         }
 
